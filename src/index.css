@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Calendar customization */
+.DatePicker {
+  width: 100% !important;
+}
+
+.DatePicker__calendarContainer {
+  width: 100% !important;
+  border: none !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+  border-radius: 0.5rem !important;
+  padding: 1rem !important;
+}
+
+.Calendar {
+  width: 100% !important;
+}
+
+.Calendar__header {
+  padding: 1rem 0 !important;
+  color: #1e40af !important;
+}
+
+.Calendar__weekDays {
+  color: #4b5563 !important;
+  font-weight: 500 !important;
+}
+
+.Calendar__day {
+  color: #374151 !important;
+  border-radius: 0.375rem !important;
+  transition: all 0.2s !important;
+}
+
+.Calendar__day.-selected {
+  background-color: #2563eb !important;
+  color: white !important;
+}
+
+.Calendar__day.-today {
+  border: 2px solid #2563eb !important;
+  color: #2563eb !important;
+  font-weight: bold !important;
+}
+
+.Calendar__day:not(.-blank):not(.-selectedStart):not(.-selectedEnd):not(.-selectedBetween):hover {
+  background-color: #e5e7eb !important;
+  color: #1f2937 !important;
+}
+
+input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb;
+}
