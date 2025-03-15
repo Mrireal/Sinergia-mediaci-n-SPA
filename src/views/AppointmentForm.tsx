@@ -17,7 +17,7 @@ interface FormErrors {
   date?: string;
 }
 
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzk5oxECuVNcl7V1Rk241VAO2EeclnAqaTUJb_NCNJCuLz2_0inFTqVbwlCZJNXW5NJ/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwpJ6ypHMCR9GiVDp6djwWPcWsb_PqSqmzfJu2dZdbzZgcWaHjn8PqL4zOv2bc3U3GK/exec';
 
 export function AppointmentForm({ onSubmit }: AppointmentFormProps) {
   const [rut, setRut] = useState('');
