@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { DayValue } from '@hassanmojab/react-modern-calendar-datepicker';
 import { CalendarIcon } from 'lucide-react';
 import DatePicker from '@hassanmojab/react-modern-calendar-datepicker';
-import '@hassanmojab/react-modern-calendar-datepicker/lib/DatePicker.css';
-import { appointmentController } from '../controllers/AppointmentController';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import '@hassanmojab/react-modern-calendar-datepicker/lib/DatePicker.css';
 
 interface AppointmentFormProps {
   onSubmit?: () => void;
@@ -17,6 +16,8 @@ interface FormErrors {
   email?: string;
   date?: string;
 }
+
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzk5oxECuVNcl7V1Rk241VAO2EeclnAqaTUJb_NCNJCuLz2_0inFTqVbwlCZJNXW5NJ/exec';
 
 export function AppointmentForm({ onSubmit }: AppointmentFormProps) {
   const [rut, setRut] = useState('');
@@ -78,6 +79,11 @@ export function AppointmentForm({ onSubmit }: AppointmentFormProps) {
     return Object.keys(newErrors).length === 0;
   };
 
+  const formatDateForSubmission = (day: DayValue, time: string): string => {
+    if (!day) return '';
+    return `${day.year}-${String(day.month).padStart(2, '0')}-${String(day.day).padStart(2, '0')} ${time}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError('');
@@ -89,47 +95,46 @@ export function AppointmentForm({ onSubmit }: AppointmentFormProps) {
     }
 
     try {
-      const success = await appointmentController.createAppointment({
+      const reservationData = {
         rut,
-        phone,
-        email,
-        date: selectedDay,
-        time: selectedTime
+        telefono: phone,
+        correo: email,
+        fecha_hora: formatDateForSubmission(selectedDay, selectedTime)
+      };
+
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reservationData)
       });
 
-      if (success) {
-        setRut('');
-        setPhone('');
-        setEmail('');
-        setSelectedDay(null);
-        setSelectedTime('');
-        setErrors({});
-        onSubmit?.();
-        alert('¡Consulta agendada exitosamente! Nos pondremos en contacto contigo pronto.');
-      } else {
-        setSubmitError('Ha ocurrido un error al agendar la consulta. Por favor, intente nuevamente.');
+      if (!response.ok) {
+        throw new Error('Error en la respuesta del servidor');
       }
+
+      // Clear form
+      setRut('');
+      setPhone('');
+      setEmail('');
+      setSelectedDay(null);
+      setSelectedTime('');
+      setErrors({});
+      onSubmit?.();
+
+      alert('¡Hora reservada exitosamente!');
     } catch (error) {
+      console.error('Error al enviar la reserva:', error);
       setSubmitError('Ha ocurrido un error al agendar la consulta. Por favor, intente nuevamente.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const renderCustomInput = ({ ref }: { ref: React.Ref<HTMLElement> }) => (
-    <button
-      type="button"
-      ref={ref as React.RefObject<HTMLButtonElement>}
-      className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 cursor-pointer bg-transparent border-0 p-0"
-    >
-      <CalendarIcon size={20} />
-      <span>Seleccionar fecha y hora</span>
-    </button>
-  );
-
   return (
     <div className="bg-white rounded-lg shadow-xl p-8 space-y-6">
-      <h2 className="text-2xl font-semibold text-gray-800">Reserva tu hora</h2>
+      <h2 className="text-2xl font-semibold text-gray-800">Agende su Consulta</h2>
       {submitError && (
         <div className="bg-red-50 text-red-600 p-3 rounded-md">
           {submitError}
@@ -197,62 +202,52 @@ export function AppointmentForm({ onSubmit }: AppointmentFormProps) {
           )}
         </div>
         <div className="space-y-4">
-          <div className="relative">
-            <DatePicker
-              value={selectedDay}
-              onChange={(day) => {
-                setSelectedDay(day);
-                if (errors.date) {
-                  setErrors({ ...errors, date: undefined });
-                }
-              }}
-              renderInput={renderCustomInput}
-              colorPrimary="#2563eb"
-              calendarClassName="!absolute !top-full !left-0 !mt-2 !z-50 !bg-white !rounded-lg !shadow-lg !border !border-gray-200"
-              shouldHighlightWeekends
-              minimumDate={{
-                year: new Date().getFullYear(),
-                month: new Date().getMonth() + 1,
-                day: new Date().getDate(),
-              }}
-              renderFooter={() => (
-                <div className="custom-footer">
-                  {selectedDay && (
-                    <div className="p-4 border-t">
-                      <h3 className="text-sm font-medium text-gray-700 mb-2">
-                        Horarios disponibles para el {format(
-                          new Date(selectedDay.year, selectedDay.month - 1, selectedDay.day),
-                          "d 'de' MMMM, yyyy",
-                          { locale: es }
-                        )}
-                      </h3>
-                      <div className="grid grid-cols-2 gap-2">
-                        {times.map((time) => (
-                          <button
-                            key={time}
-                            type="button"
-                            onClick={() => {
-                              setSelectedTime(time);
-                              if (errors.date) {
-                                setErrors({ ...errors, date: undefined });
-                              }
-                            }}
-                            className={`p-2 text-sm rounded-md transition-colors ${
-                              selectedTime === time
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
-                          >
-                            {time}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            />
-          </div>
+          <label className="block text-sm font-medium text-gray-700">Fecha y Hora</label>
+          <DatePicker
+            value={selectedDay}
+            onChange={setSelectedDay}
+            inputPlaceholder="Seleccionar fecha"
+            colorPrimary="#2563eb"
+            calendarClassName="custom-calendar"
+            shouldHighlightWeekends
+            minimumDate={{
+              year: new Date().getFullYear(),
+              month: new Date().getMonth() + 1,
+              day: new Date().getDate(),
+            }}
+          />
+          {selectedDay && (
+            <div className="mt-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">
+                Horarios disponibles para el {format(
+                  new Date(selectedDay.year, selectedDay.month - 1, selectedDay.day),
+                  "d 'de' MMMM, yyyy",
+                  { locale: es }
+                )}
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                {times.map((time) => (
+                  <button
+                    key={time}
+                    type="button"
+                    onClick={() => {
+                      setSelectedTime(time);
+                      if (errors.date) {
+                        setErrors({ ...errors, date: undefined });
+                      }
+                    }}
+                    className={`p-2 text-sm rounded-md transition-colors ${
+                      selectedTime === time
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {time}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {errors.date && (
             <p className="text-sm text-red-600">{errors.date}</p>
           )}
@@ -261,8 +256,8 @@ export function AppointmentForm({ onSubmit }: AppointmentFormProps) {
           type="submit"
           disabled={isSubmitting}
           className={`w-full px-8 py-3 rounded-lg transition duration-300 text-lg font-medium ${
-            isSubmitting
-              ? 'bg-blue-400 cursor-not-allowed'
+            isSubmitting 
+              ? 'bg-blue-400 cursor-not-allowed' 
               : 'bg-blue-600 hover:bg-blue-700'
           } text-white`}
         >

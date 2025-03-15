@@ -2,17 +2,18 @@ import { DayValue } from '@hassanmojab/react-modern-calendar-datepicker';
 import { appointmentModel, Appointment } from '../models/AppointmentModel';
 
 export class AppointmentController {
-  async createAppointment(appointmentData: Appointment): Promise<boolean> {
+  createAppointment(appointmentData: Appointment): boolean {
     try {
       if (!this.validateAppointment(appointmentData)) {
         return false;
       }
 
-      if (!await appointmentModel.isTimeSlotAvailable(appointmentData.date, appointmentData.time)) {
+      if (!appointmentModel.isTimeSlotAvailable(appointmentData.date, appointmentData.time)) {
         return false;
       }
 
-      return await appointmentModel.createAppointment(appointmentData);
+      appointmentModel.createAppointment(appointmentData);
+      return true;
     } catch (error) {
       console.error('Error creating appointment:', error);
       return false;
